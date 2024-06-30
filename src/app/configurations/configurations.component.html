@@ -1,0 +1,67 @@
+<mat-card class="mat-card-config-editor">
+  <mat-card-content>
+    <mat-form-field class="config-edit-field-small">
+      <input class="config-input" matInput placeholder="Config ID" disabled>
+    </mat-form-field>
+      <mat-form-field class="config-edit-field">
+        <input class="config-input" matInput placeholder="Config Name" disabled>
+      </mat-form-field>
+      <mat-form-field class="config-edit-field">
+        <input class="config-input"  matInput placeholder="Config Value" required>
+      </mat-form-field>
+      <button class="config-save-button" mat-raised-button color="primary" type="submit">Save</button>
+  </mat-card-content>
+</mat-card>
+
+<mat-card>
+<mat-card-content>
+<mat-form-field class="filter-form-field">
+    <input matInput (keyup)="applyFilter($event)" placeholder="Search configurations" color="primary">
+</mat-form-field>
+
+<div class="mat-elevation-z8">
+  <table mat-table [dataSource]="dataSource"  class="full-width-table" matSort aria-label="Configurations">
+    <!-- Id Column -->
+    <ng-container matColumnDef="id">
+      <th *matHeaderCellDef mat-header-cell mat-sort-header>Id</th>
+      <td mat-cell *matCellDef="let element">{{element.id}}</td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="config_name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Config Name</th>
+      <td mat-cell *matCellDef="let element">{{element.config_name}}</td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="config_value">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Config Value</th>
+      <td mat-cell *matCellDef="let element">{{element.config_value}}</td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="date_added">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Date Add</th>
+      <td mat-cell *matCellDef="let element">{{element.date_added}}</td>
+    </ng-container>
+
+    <!-- Name Column -->
+    <ng-container matColumnDef="last_updated">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Updated</th>
+      <td mat-cell *matCellDef="let element">{{element.last_updated}}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <mat-paginator #paginator
+      [length]="dataSource.data.length"
+      [pageIndex]="0"
+      [pageSize]="8"
+      [pageSizeOptions]="[5, 10, 20]"
+      aria-label="Select page">
+  </mat-paginator>
+</div>
+</mat-card-content>
+</mat-card>

@@ -1,0 +1,41 @@
+mat-card {
+  margin-top: .5rem;
+  width: 99%;
+  height: 98%;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  display: inline;
+  mat-card-hoverable {
+    cursor:pointer;
+  }
+}
+
+mat-card:hover {
+  background-color: dimgrey;
+}
+
+mat-card:active {
+  background-color: #949494;
+  color: white;
+}
+
+mat-card-header {
+  //background-color: #3b3a3a;
+  //color: white;
+  align-items: center;
+  text-align: center;
+  display: inline;
+}
+
+mat-card-title {
+  font-size: 1.5em;
+  font-weight: 200;
+  font-family: "Oswald", sans-serif;
+}
+
+mat-card-content {
+  font-size: 1.2em;
+  font-family: "Playfair Display", serif;
+  font-style: normal;
+}

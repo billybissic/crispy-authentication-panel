@@ -1,0 +1,74 @@
+
+<mat-grid-list cols="3" rowHeight="2:1">
+  <mat-grid-tile>
+    <mat-card (click)="navigateToAdministrors()">
+      <mat-card-header>
+        <div class="mat-card-titles">
+          <mat-card-title>Administrators</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Administrators can manage users, configurations, API keys, and logs.</p>
+      </mat-card-content>
+    </mat-card>
+  </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card (click)="navigateToConfigurations()">
+      <mat-card-header>
+        <div class="mat-card-titles">
+          <mat-card-title>Configurations</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Configurations can be set for the security api </p>
+      </mat-card-content>
+    </mat-card></mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card (click)="navigateToUsers()">
+      <mat-card-header>
+        <div class="mat-card-titles">
+          <mat-card-title>Users</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Users can be managed by administrators.</p>
+      </mat-card-content>
+    </mat-card>
+    </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card (click)="navigateToLogs()">
+      <mat-card-header>
+        <div class="mat-card-titles">
+          <mat-card-title>Logs</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Logs can be viewed by administrators.</p>
+      </mat-card-content>
+    </mat-card>
+    </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card (click)="navigateToAPIKeys()">
+      <mat-card-header>
+        <div class="mat-card-titles">
+          <mat-card-title>API Keys</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <p>API keys can be managed by administrators.</p>
+      </mat-card-content>
+    </mat-card>
+    </mat-grid-tile>
+  <mat-grid-tile>
+    <mat-card (click)="navigateToAbout()">
+      <mat-card-header>
+        <div class="mat-card-titles">
+          <mat-card-title>About</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <p>About this application.</p>
+      </mat-card-content>
+    </mat-card>
+    </mat-grid-tile>
+</mat-grid-list>
