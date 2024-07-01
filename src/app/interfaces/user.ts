@@ -6,5 +6,5 @@ export interface User {
   last_updated: Date;
   uuid: string;
   failed_login_attempts: number;
-  is_2FA_configured: number;
+  is_2fa_configured: number;
 }

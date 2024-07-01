@@ -14,7 +14,7 @@ import {FormGroup} from "@angular/forms";
 export class UsersComponent implements OnInit {
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
   displayedColumns = ['id', 'username', 'password', 'date_added', 'last_updated', 'uuid',
-    'failed_login_attempts', 'is_2FA_configured'];
+    'failed_login_attempts', 'is_2fa_configured'];
   dataSource = new MatTableDataSource<any>();
   dataResponse: User[] = [];
 
@@ -31,6 +31,7 @@ export class UsersComponent implements OnInit {
     this.usersService.getAllUsers().subscribe((data) => {
         console.log(data['response_body'])
         this.dataResponse = data['response_body'];
+        console.log(this.dataResponse)
         this.dataSource.data = data['response_body'];
         this.dataSource.sort = this.sort;
         this.dataSource.paginator = this.paginator;

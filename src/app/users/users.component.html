@@ -1,13 +1,13 @@
 <mat-card class="mat-card-config-editor">
   <mat-card-content>
     <mat-form-field class="config-edit-field-small">
-      <input class="config-input" matInput placeholder="Config ID" disabled>
+      <input class="config-input" matInput placeholder="UUID" disabled>
     </mat-form-field>
     <mat-form-field class="config-edit-field">
-      <input class="config-input" matInput placeholder="Config Name" disabled>
+      <input class="config-input" matInput placeholder="Username" disabled>
     </mat-form-field>
     <mat-form-field class="config-edit-field">
-      <input class="config-input"  matInput placeholder="Config Value" required>
+      <input class="config-input"  matInput placeholder="Password" required>
     </mat-form-field>
     <button class="config-save-button" mat-raised-button color="primary" type="submit">Save</button>
   </mat-card-content>
@@ -65,9 +65,9 @@
         </ng-container>
 
         <!-- Name Column -->
-        <ng-container matColumnDef="is_2FA_configured">
+        <ng-container matColumnDef="is_2fa_configured">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>2FA Configured</th>
-          <td mat-cell *matCellDef="let element">{{element.is_2FA_configured}}</td>
+          <td mat-cell *matCellDef="let element">{{element.is_2fa_configured}}</td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
