@@ -38,7 +38,8 @@ export const routes: Routes = [
     HomeComponent,
     AboutComponent,
     ConfigurationsComponent,
-    UsersComponent
+    UsersComponent,
+    AdministratorsComponent
   ],
   imports: [RouterModule.forRoot(routes), HttpClientModule,
     BrowserModule,
