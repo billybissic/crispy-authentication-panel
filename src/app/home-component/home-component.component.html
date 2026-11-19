@@ -1,74 +1,12 @@
-
-<mat-grid-list cols="3" rowHeight="2:1">
-  <mat-grid-tile>
-    <mat-card (click)="navigateToAdministrors()">
-      <mat-card-header>
-        <div class="mat-card-titles">
-          <mat-card-title>Administrators</mat-card-title>
-        </div>
-      </mat-card-header>
-      <mat-card-content>
-        <p>Administrators can manage users, configurations, API keys, and logs.</p>
-      </mat-card-content>
-    </mat-card>
-  </mat-grid-tile>
-  <mat-grid-tile>
-    <mat-card (click)="navigateToConfigurations()">
-      <mat-card-header>
-        <div class="mat-card-titles">
-          <mat-card-title>Configurations</mat-card-title>
-        </div>
-      </mat-card-header>
-      <mat-card-content>
-        <p>Configurations can be set for the security api </p>
-      </mat-card-content>
-    </mat-card></mat-grid-tile>
-  <mat-grid-tile>
-    <mat-card (click)="navigateToUsers()">
-      <mat-card-header>
-        <div class="mat-card-titles">
-          <mat-card-title>Users</mat-card-title>
-        </div>
-      </mat-card-header>
-      <mat-card-content>
-        <p>Users can be managed by administrators.</p>
-      </mat-card-content>
-    </mat-card>
-    </mat-grid-tile>
-  <mat-grid-tile>
-    <mat-card (click)="navigateToLogs()">
-      <mat-card-header>
-        <div class="mat-card-titles">
-          <mat-card-title>Logs</mat-card-title>
-        </div>
-      </mat-card-header>
-      <mat-card-content>
-        <p>Logs can be viewed by administrators.</p>
-      </mat-card-content>
-    </mat-card>
-    </mat-grid-tile>
-  <mat-grid-tile>
-    <mat-card (click)="navigateToAPIKeys()">
-      <mat-card-header>
-        <div class="mat-card-titles">
-          <mat-card-title>API Keys</mat-card-title>
-        </div>
-      </mat-card-header>
-      <mat-card-content>
-        <p>API keys can be managed by administrators.</p>
-      </mat-card-content>
-    </mat-card>
-    </mat-grid-tile>
-  <mat-grid-tile>
-    <mat-card (click)="navigateToAbout()">
-      <mat-card-header>
-        <div class="mat-card-titles">
-          <mat-card-title>About</mat-card-title>
-        </div>
-      </mat-card-header>
-      <mat-card-content>
-        <p>About this application.</p>
-      </mat-card-content>
-    </mat-card>
-    </mat-grid-tile>
-</mat-grid-list>
+<section class="overview">
+  <div class="overview-heading"><div><p class="eyebrow">IDENTITY & ACCESS</p><h1>Authentication overview</h1><p>Manage accounts, access, and security settings from one workspace.</p></div><span class="overview-label">CRISPY DISCO / AUTH</span></div>
+  <div class="overview-feature"><div><span class="feature-kicker">CONTROL CENTER</span><h2>Keep your environment in sync.</h2><p>Choose an area below to review authentication data and configuration.</p></div><button type="button" (click)="navigateToUsers()">Manage users <span aria-hidden="true">↗</span></button></div>
+  <div class="section-heading"><h2>Workspace</h2><span>Quick access</span></div>
+  <div class="overview-grid">
+    <button type="button" class="overview-card" (click)="navigateToUsers()"><span class="card-symbol">◉</span><strong>Users</strong><span>Review accounts and access.</span><em>Open users ↗</em></button>
+    <button type="button" class="overview-card" (click)="navigateToAdministrors()"><span class="card-symbol">◇</span><strong>Administrators</strong><span>Manage privileged accounts.</span><em>Open administrators ↗</em></button>
+    <button type="button" class="overview-card" (click)="navigateToAPIKeys()"><span class="card-symbol">⌁</span><strong>API Keys</strong><span>View API key management.</span><em>Open API keys ↗</em></button>
+    <button type="button" class="overview-card" (click)="navigateToConfigurations()"><span class="card-symbol">⚙</span><strong>Configurations</strong><span>Review authentication settings.</span><em>Open configurations ↗</em></button>
+    <button type="button" class="overview-card" (click)="navigateToLogs()"><span class="card-symbol">≡</span><strong>Logs</strong><span>Inspect activity and events.</span><em>Open logs ↗</em></button>
+  </div>
+</section>
