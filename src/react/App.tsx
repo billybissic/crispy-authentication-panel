@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, type FormEvent } from 'react';
 
 type Page = 'overview' | 'users' | 'administrators' | 'api-keys' | 'configurations' | 'logs' | 'about';
 type RecordValue = Record<string, unknown>;
@@ -11,20 +11,20 @@ const pages: { id: Page; label: string; icon: string; description: string }[] = 
   { id: 'logs', label: 'Logs', icon: '≡', description: 'Authentication activity.' },
 ];
 
-const apiBase = (import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:3000/crispy/v1').replace(/\/$/, '');
+const apiBase = (import.meta.env.VITE_AUTH_API_BASE_URL || '/crispy/v1').replace(/\/$/, '');
 
 function currentPage(): Page {
   const value = window.location.hash.slice(1).replace(/^\//, '');
   return (['overview', 'users', 'administrators', 'api-keys', 'configurations', 'logs', 'about'].includes(value) ? value : 'overview') as Page;
 }
 
-async function readCollection(path: string, token: string, signal: AbortSignal): Promise<RecordValue[]> {
+async function readCollection(path: string, signal: AbortSignal): Promise<RecordValue[]> {
   const response = await fetch(`${apiBase}${path}`, {
     signal,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include',
   });
   if (!response.ok) throw new Error(response.status === 401 || response.status === 403
-    ? 'Access denied. Enter a valid token for this API.'
+    ? 'Your session expired or access was denied. Sign in again.'
     : `API request failed (${response.status}).`);
   const data: unknown = await response.json();
   const body = typeof data === 'object' && data !== null && 'response_body' in data
@@ -41,9 +41,9 @@ function valueOf(row: RecordValue, key: string): string {
   return String(value);
 }
 
-function DataPage({ title, description, path, columns, token, maskValues = false }: {
+function DataPage({ title, description, path, columns, onUnauthorized, maskValues = false }: {
   title: string; description: string; path: string; columns: { key: string; label: string }[];
-  token: string; maskValues?: boolean;
+  onUnauthorized: () => void; maskValues?: boolean;
 }) {
   const [rows, setRows] = useState<RecordValue[]>([]);
   const [error, setError] = useState('');
@@ -55,12 +55,12 @@ function DataPage({ title, description, path, columns, token, maskValues = false
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(''); setRows([]);
-    readCollection(path, token, controller.signal)
+    readCollection(path, controller.signal)
       .then(setRows)
-      .catch((cause) => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Request failed.'); })
+      .catch((cause) => { if (!controller.signal.aborted) { const message = cause instanceof Error ? cause.message : 'Request failed.'; setError(message); if (message.startsWith('Your session expired')) onUnauthorized(); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [path, token, reload]);
+  }, [path, reload, onUnauthorized]);
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -97,20 +97,88 @@ function Placeholder({ name, detail }: { name: string; detail: string }) {
   return <section className="data-page"><div className="page-heading"><div><p className="eyebrow">IDENTITY & ACCESS</p><h1>{name}</h1><p>{detail}</p></div></div><div className="data-panel placeholder"><span className="card-icon">◇</span><h2>{name} integration pending</h2><p>The existing panel did not contain a working {name.toLowerCase()} view. Connect the current API endpoint before enabling actions here.</p></div></section>;
 }
 
+type AuthUser = { uuid: string; username: string };
+type Challenge = { temp_token: string; setup_required: boolean };
+
+async function authRequest(path: string, body?: Record<string, string>, tempToken?: string): Promise<{ response_status?: string; temp_token?: string; setup_required?: boolean; manual_entry_secret?: string; user?: AuthUser; message?: string }> {
+  const response = await fetch(`${apiBase}${path}`, {
+    method: body ? 'POST' : 'GET', credentials: 'include',
+    headers: body ? { 'Content-Type': 'application/json', ...(tempToken ? { Authorization: `Bearer ${tempToken}` } : {}) } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok && response.status !== 202) throw new Error(response.status === 401 ? 'Invalid credentials or expired session.' : data.message || data.error || `Request failed (${response.status}).`);
+  return data;
+}
+
+function SignIn({ onSignedIn }: { onSignedIn: (user: AuthUser) => void }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [secret, setSecret] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function finish() {
+    const session = await authRequest('/authenticate/session');
+    if (!session.user) throw new Error('The server did not create a session.');
+    onSignedIn(session.user);
+  }
+  async function submit(event: FormEvent) {
+    event.preventDefault(); setError(''); setBusy(true);
+    try {
+      if (!challenge) {
+        const response = await authRequest('/authenticate/login', { _username: username, _password: password });
+        setPassword('');
+        if (response.response_status === 'AWAITING_MFA' && response.temp_token) {
+          setChallenge({ temp_token: response.temp_token, setup_required: Boolean(response.setup_required) });
+        } else await finish();
+      } else {
+        await authRequest('/mfa/verify-2fa', { mfa_code: code }, challenge.temp_token);
+        setChallenge(null); setSecret(''); setCode(''); await finish();
+      }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Sign-in failed.'); }
+    finally { setBusy(false); }
+  }
+  async function setupMfa() {
+    if (!challenge) return;
+    setBusy(true); setError('');
+    try {
+      const response = await authRequest('/mfa/setup-2fa', {}, challenge.temp_token);
+      if (!response.manual_entry_secret) throw new Error('The API did not return a setup secret.');
+      setSecret(response.manual_entry_secret);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Setup failed.'); }
+    finally { setBusy(false); }
+  }
+  return <div className="signin-layout"><div className="signin-brand"><div className="brand-mark">✦</div><strong>CRISPY DISCO</strong><span>AUTHENTICATION</span></div><form className="signin-card" onSubmit={submit}>
+    <p className="eyebrow">SECURE WORKSPACE</p><h1>{challenge ? 'Verify your identity' : 'Welcome back'}</h1><p>{challenge ? 'Enter the six-digit code from your authenticator.' : 'Sign in to manage authentication.'}</p>
+    {error && <div className="signin-error" role="alert">{error}</div>}
+    {!challenge ? <><label htmlFor="username">Username</label><input id="username" autoComplete="username" required value={username} onChange={event => setUsername(event.target.value)} />
+      <label htmlFor="password">Password</label><input id="password" type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} /></>
+      : <><label htmlFor="mfa-code">Authenticator code</label><input id="mfa-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" required value={code} onChange={event => setCode(event.target.value.replace(/\D/g, ''))} />
+      {challenge.setup_required && <div className="mfa-setup">{secret ? <p>Add this key to your authenticator, then enter its code: <strong className="setup-secret">{secret}</strong></p> : <button type="button" onClick={setupMfa} disabled={busy}>Set up authenticator</button>}</div>}
+      <button type="button" className="back-button" onClick={() => { setChallenge(null); setSecret(''); setCode(''); }}>Use a different account</button></>}
+    <button className="signin-submit" disabled={busy}>{busy ? 'Please wait…' : challenge ? 'Verify code' : 'Sign in'}</button>
+  </form><small>Connected to {apiBase}</small></div>;
+}
+
 export default function App() {
   const [page, setPage] = useState<Page>(currentPage);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [token, setToken] = useState('');
-  const [tokenDraft, setTokenDraft] = useState('');
-  const [connectionOpen, setConnectionOpen] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [checking, setChecking] = useState(true);
+  useEffect(() => { authRequest('/authenticate/session').then(result => setUser(result.user || null)).catch(() => setUser(null)).finally(() => setChecking(false)); }, []);
   useEffect(() => { const update = () => setPage(currentPage()); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
   const navigate = (next: Page) => { window.location.hash = next === 'overview' ? '#/' : `#/${next}`; setPage(next); setSidebarOpen(false); };
-  const accountColumns = [{ key: 'username', label: 'Username' }, { key: 'email', label: 'Email' }, { key: 'uuid', label: 'UUID' }, { key: 'last_login', label: 'Last login' }, { key: 'is_2FA_configured', label: '2FA' }];
+  const accountColumns = useMemo(() => [{ key: 'username', label: 'Username' }, { key: 'email', label: 'Email' }, { key: 'uuid', label: 'UUID' }, { key: 'last_login', label: 'Last login' }, { key: 'is_2FA_configured', label: '2FA' }], []);
+  const onUnauthorized = useCallback(() => setUser(null), []);
+  async function signOut() { try { await authRequest('/authenticate/logout', {}); } catch { /* Clear the local view even if the session already expired. */ } finally { setUser(null); } }
+  if (checking) return <div className="auth-loading">Checking your session…</div>;
+  if (!user) return <SignIn onSignedIn={setUser} />;
   return <div className="shell">
-    <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}><div className="brand"><div className="brand-mark">✦</div><div><strong>CRISPY DISCO</strong><span>AUTHENTICATION</span></div></div><div className="nav-label">WORKSPACE</div><nav aria-label="Main navigation">{pages.map((item) => <button key={item.id} className={page === item.id ? 'active' : ''} onClick={() => navigate(item.id)}><span>{item.icon}</span>{item.label}</button>)}</nav><div className="sidebar-foot"><span className="status-dot" /> Authentication workspace</div></aside>
-    <div className="main"><header className="topbar"><button className="menu-toggle" aria-label="Toggle menu" onClick={() => setSidebarOpen((open) => !open)}>☰</button><div className="breadcrumb">CRISPY DISCO <span>/</span> AUTHENTICATION</div><button className="connection-trigger" onClick={() => setConnectionOpen((open) => !open)}>{token ? 'TOKEN SET' : 'CONNECT API'}</button><span className="account-mark" aria-hidden="true">✦</span></header>
-      {connectionOpen && <form className="connection-panel" onSubmit={(event) => { event.preventDefault(); setToken(tokenDraft.trim()); setConnectionOpen(false); }}><label htmlFor="api-token">API bearer token</label><p>Requests use {apiBase}. The token stays in this tab’s memory and clears on reload.</p><div><input id="api-token" type="password" autoComplete="off" value={tokenDraft} onChange={(event) => setTokenDraft(event.target.value)} placeholder="Paste a valid access token" /><button type="submit">Use token</button><button type="button" onClick={() => { setToken(''); setTokenDraft(''); }}>Clear</button></div></form>}
-      <main className="content">{page === 'overview' ? <Overview navigate={navigate} /> : page === 'users' ? <DataPage title="Users" description="Review accounts registered with Crispy Disco." path="/users/getUsers" token={token} columns={accountColumns} /> : page === 'administrators' ? <DataPage title="Administrators" description="Review privileged accounts and authentication state." path="/administrators/getAdministrators" token={token} columns={accountColumns} /> : page === 'configurations' ? <DataPage title="Configurations" description="Review authentication API settings. Sensitive values are hidden." path="/web-panel/getAllConfigurations" token={token} maskValues columns={[{ key: 'config_name', label: 'Setting' }, { key: 'config_value', label: 'Value' }, { key: 'last_updated', label: 'Updated' }]} /> : page === 'about' ? <Placeholder name="About" detail="Standalone Crispy Disco authentication control panel." /> : <Placeholder name={page === 'logs' ? 'Logs' : 'API Keys'} detail="This section needs a current API integration." />}</main>
+    <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}><div className="brand"><div className="brand-mark">✦</div><div><strong>CRISPY DISCO</strong><span>AUTHENTICATION</span></div></div><div className="nav-label">WORKSPACE</div><nav aria-label="Main navigation">{pages.map((item) => <button key={item.id} className={page === item.id ? 'active' : ''} onClick={() => navigate(item.id)}><span>{item.icon}</span>{item.label}</button>)}</nav><div className="sidebar-foot"><span className="status-dot" /> Signed in as {user.username}</div></aside>
+    <div className="main"><header className="topbar"><button className="menu-toggle" aria-label="Toggle menu" onClick={() => setSidebarOpen((open) => !open)}>☰</button><div className="breadcrumb">CRISPY DISCO <span>/</span> AUTHENTICATION</div><span className="signed-in-name">{user.username}</span><button className="connection-trigger" onClick={signOut}>SIGN OUT</button></header>
+      <main className="content">{page === 'overview' ? <Overview navigate={navigate} /> : page === 'users' ? <DataPage title="Users" description="Review accounts registered with Crispy Disco." path="/users/getUsers" onUnauthorized={onUnauthorized} columns={accountColumns} /> : page === 'administrators' ? <DataPage title="Administrators" description="Review privileged accounts and authentication state." path="/administrators/getAdministrators" onUnauthorized={onUnauthorized} columns={accountColumns} /> : page === 'configurations' ? <DataPage title="Configurations" description="Review authentication API settings. Sensitive values are hidden." path="/web-panel/getAllConfigurations" onUnauthorized={onUnauthorized} maskValues columns={[{ key: 'config_name', label: 'Setting' }, { key: 'config_value', label: 'Value' }, { key: 'last_updated', label: 'Updated' }]} /> : page === 'about' ? <Placeholder name="About" detail="Standalone Crispy Disco authentication control panel." /> : <Placeholder name={page === 'logs' ? 'Logs' : 'API Keys'} detail="This section needs a current API integration." />}</main>
     </div>
   </div>;
 }
