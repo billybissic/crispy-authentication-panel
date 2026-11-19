@@ -1,60 +1,30 @@
 @if (showLogin) {
-<p>Login Card</p>
-}
-
-@if (!showLogin) {
-  <mat-toolbar color="secondary">
-  <button mat-button type="button" (click)="drawer.toggle()" color="primary"><fa-icon [icon]="faBars" class="side-panel-icon" color="primary"></fa-icon></button>
-    <span>{{pageTitle}}</span><span class="fill-remaining-space">&nbsp;</span><span>{{panelTitle}}</span><span class="fill-remaining-space">&nbsp;</span>
-  <button mat-button type="button" color="primary"><fa-icon [icon]="faUser" class="side-panel-icon" color="primary"></fa-icon></button>
-</mat-toolbar>
-
-<mat-drawer-container class="side-nav-container" autosize>
-  <mat-drawer #drawer class="example-sidenav" mode="side">
-    <section class="section-spacer"></section>
-    <section>
-      <div class="side-nav-button-row">
-        <button mat-button class="side-nav-button" (click)="navigateToHome()">Home</button>
-      </div>
-      @if (isAdministrator) {
-        <div class="side-nav-button-row">
-            <button mat-button class="side-nav-button" (click)="navigateToAdministrors()">Administrators</button>
-        </div>
-      }
-      <div class="side-nav-button-row">
-        <button mat-button class="side-nav-button" (click)="navigateToAPIKeys()">API Keys</button>
-      </div>
-      @if (isAdministrator) {
-         <div class="side-nav-button-row">
-            <button mat-button class="side-nav-button" (click)="navigateToConfigurations()">Configurations</button>
-        </div>
-        <div class="side-nav-button-row">
-          <button mat-button class="side-nav-button" (click)="navigateToLogs()">Logs</button>
-        </div>
-        <div class="side-nav-button-row">
-          <button mat-button class="side-nav-button" (click)="navigateToUsers()">Users</button>
-        </div>
-      }
-      <div class="side-nav-button-row">
-        <button mat-button class="side-nav-button" (click)="navigateToAbout()">About</button>
-      </div>
-    </section>
-    <!--@if (showFiller) {
-      <p>Lorem, ipsum dolor sit amet consectetur.</p>
-    }-->
-    <!--<button (click)="showFiller = !showFiller" mat-raised-button>
-      Toggle extra text
-    </button>-->
-  </mat-drawer>
-
-  <div class="example-sidenav-content">
-
-    <router-outlet />
-    <!--<button type="button" mat-button (click)="drawer.toggle()">
-      Toggle sidenav
-    </button>-->
+  <div class="auth-login-placeholder">Login</div>
+} @else {
+  <div class="auth-shell" [class.sidebar-open]="sidebarOpen">
+    <aside class="auth-sidebar" aria-label="Authentication navigation">
+      <div class="auth-brand"><div class="auth-brand-mark" aria-hidden="true">✦</div><div><strong>CRISPY DISCO</strong><span>AUTHENTICATION</span></div></div>
+      <div class="auth-nav-label">WORKSPACE</div>
+      <nav class="auth-nav">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"><span aria-hidden="true">◫</span> Overview</a>
+        <a routerLink="/users" routerLinkActive="active"><span aria-hidden="true">◉</span> Users</a>
+        @if (isAdministrator) { <a routerLink="/administrators" routerLinkActive="active"><span aria-hidden="true">◇</span> Administrators</a> }
+        <a routerLink="/api-keys" routerLinkActive="active"><span aria-hidden="true">⌁</span> API Keys</a>
+        @if (isAdministrator) {
+          <a routerLink="/configurations" routerLinkActive="active"><span aria-hidden="true">⚙</span> Configurations</a>
+          <a routerLink="/logs" routerLinkActive="active"><span aria-hidden="true">≡</span> Logs</a>
+        }
+      </nav>
+      <div class="auth-sidebar-footer"><span class="auth-status-dot"></span> Authentication workspace<a routerLink="/about">About</a></div>
+    </aside>
+    <div class="auth-main">
+      <header class="auth-topbar">
+        <button class="auth-menu-button" type="button" (click)="sidebarOpen = !sidebarOpen" aria-label="Toggle navigation">☰</button>
+        <div class="auth-breadcrumb">CRISPY DISCO <span>/</span> AUTHENTICATION</div>
+        <div class="auth-topbar-right"><span class="auth-environment">CONTROL PANEL</span><span class="auth-avatar" aria-label="Account">B</span></div>
+      </header>
+      <main class="auth-content"><router-outlet /></main>
+    </div>
   </div>
-
-</mat-drawer-container>
-
 }
+
