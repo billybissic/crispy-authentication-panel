@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import {RouterOutlet} from "@angular/router";
+import {RouterOutlet, RouterLink, RouterLinkActive} from "@angular/router";
 import {MatDrawer, MatDrawerContainer} from "@angular/material/sidenav";
 import {NavBarComponent} from "./nav-bar/nav-bar.component";
 import {FaIconComponent} from "@fortawesome/angular-fontawesome";
@@ -15,6 +15,8 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [
     RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
     MatDrawer,
     MatDrawerContainer,
     NavBarComponent,
@@ -33,6 +35,7 @@ export class AppComponent {
   //showFiller = false;
   showLogin = false;
   isAdministrator = true;
+  sidebarOpen = false;
   panelTitle: string = 'Crispy Authentication System';
   pageTitle: string = '';
 
